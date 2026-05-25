@@ -1,0 +1,669 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Gas Line Sizing – Crane TP-410M</title>
+  <style>
+    :root{
+      --bg:#f4f7fb;
+      --card:#ffffff;
+      --line:#d8e0ea;
+      --text:#1f2a37;
+      --muted:#607086;
+      --accent:#0f62fe;
+      --good:#138a36;
+      --bad:#c62828;
+      --warn:#b7791f;
+      --soft:#eef4ff;
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0;
+      font-family:Segoe UI, Roboto, Arial, sans-serif;
+      background:var(--bg);
+      color:var(--text);
+    }
+    .wrap{
+      max-width:1400px;
+      margin:20px auto;
+      padding:0 16px 24px;
+    }
+    .titlebar{
+      background:linear-gradient(135deg,#0f62fe,#4f8cff);
+      color:#fff;
+      border-radius:14px;
+      padding:18px 20px;
+      box-shadow:0 10px 24px rgba(15,98,254,.18);
+      margin-bottom:16px;
+    }
+    .titlebar h1{
+      margin:0 0 6px;
+      font-size:26px;
+    }
+    .titlebar p{
+      margin:0;
+      opacity:.95;
+      line-height:1.45;
+    }
+    .grid{
+      display:grid;
+      grid-template-columns:1.2fr 1.1fr .95fr;
+      gap:16px;
+    }
+    .card{
+      background:var(--card);
+      border:1px solid var(--line);
+      border-radius:14px;
+      box-shadow:0 4px 14px rgba(23,43,77,.06);
+      overflow:hidden;
+    }
+    .card h2{
+      margin:0;
+      padding:14px 16px;
+      background:#f8fbff;
+      border-bottom:1px solid var(--line);
+      font-size:18px;
+    }
+    .section{
+      padding:14px 16px 16px;
+    }
+    .subhead{
+      margin:0 0 10px;
+      font-size:14px;
+      color:var(--muted);
+      text-transform:uppercase;
+      letter-spacing:.04em;
+    }
+    .fields{
+      display:grid;
+      grid-template-columns:repeat(2, minmax(0,1fr));
+      gap:12px 14px;
+    }
+    .field{
+      display:flex;
+      flex-direction:column;
+      gap:6px;
+    }
+    .field.full{grid-column:1 / -1}
+    label{
+      font-size:13px;
+      color:var(--muted);
+      font-weight:600;
+    }
+    input, select{
+      width:100%;
+      height:40px;
+      border:1px solid #c9d5e3;
+      border-radius:10px;
+      padding:8px 12px;
+      font-size:14px;
+      color:var(--text);
+      background:#fff;
+    }
+    input:focus, select:focus{
+      outline:none;
+      border-color:var(--accent);
+      box-shadow:0 0 0 3px rgba(15,98,254,.12);
+    }
+    .btnrow{
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+      margin-top:14px;
+    }
+    button{
+      border:none;
+      border-radius:10px;
+      padding:11px 14px;
+      font-size:14px;
+      font-weight:700;
+      cursor:pointer;
+    }
+    .primary{background:var(--accent); color:#fff;}
+    .secondary{background:#eaf1ff; color:#1143a6;}
+    .ghost{background:#eef2f7; color:#334155;}
+    .results{
+      display:grid;
+      grid-template-columns:repeat(2, minmax(0,1fr));
+      gap:10px;
+    }
+    .metric{
+      border:1px solid var(--line);
+      border-radius:12px;
+      padding:12px;
+      background:#fff;
+    }
+    .metric .k{
+      font-size:12px;
+      color:var(--muted);
+      margin-bottom:6px;
+      text-transform:uppercase;
+      letter-spacing:.03em;
+    }
+    .metric .v{
+      font-size:22px;
+      font-weight:800;
+      line-height:1.2;
+    }
+    .metric .u{
+      font-size:12px;
+      color:var(--muted);
+      margin-top:4px;
+    }
+    .status{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:12px;
+      padding:12px;
+      border:1px solid var(--line);
+      border-radius:12px;
+      margin-top:10px;
+      background:#fff;
+    }
+    .badge{
+      min-width:88px;
+      text-align:center;
+      padding:7px 10px;
+      border-radius:999px;
+      font-weight:800;
+      font-size:12px;
+      color:#fff;
+    }
+    .yes{background:var(--good)}
+    .no{background:var(--bad)}
+    .maybe{background:var(--warn)}
+    .note{
+      margin-top:14px;
+      padding:12px;
+      border-radius:12px;
+      background:var(--soft);
+      border:1px solid #d8e7ff;
+      color:#29446b;
+      font-size:13px;
+      line-height:1.5;
+    }
+    .formula{
+      font-family:Cambria, Georgia, serif;
+      background:#fbfcfe;
+      border:1px dashed var(--line);
+      border-radius:12px;
+      padding:12px;
+      font-size:14px;
+      line-height:1.6;
+      margin-top:12px;
+    }
+    .small{
+      font-size:12px;
+      color:var(--muted);
+    }
+    .table{
+      width:100%;
+      border-collapse:collapse;
+      margin-top:12px;
+      font-size:13px;
+    }
+    .table th,.table td{
+      border:1px solid var(--line);
+      padding:8px 10px;
+      text-align:left;
+    }
+    .table th{
+      background:#f8fbff;
+    }
+    @media (max-width:1100px){
+      .grid{grid-template-columns:1fr}
+    }
+    @media (max-width:640px){
+      .fields,.results{grid-template-columns:1fr}
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="titlebar">
+      <h1>Gas Line Sizing – Crane TP-410M Method</h1>
+      <p>Isothermal gas-line sizing calculator with manual pipe inputs, Swamee-Jain friction factor, iterative outlet-pressure solution, and design checks for velocity and pressure-drop criteria.</p>
+    </div>
+
+    <div class="grid">
+      <div class="card">
+        <h2>Flow Conditions</h2>
+        <div class="section">
+          <div class="fields">
+            <div class="field">
+              <label for="service">Service</label>
+              <input id="service" value="Fuel Gas" />
+            </div>
+            <div class="field">
+              <label for="lineNo">Line No.</label>
+              <input id="lineNo" value="001" />
+            </div>
+            <div class="field">
+              <label for="massFlow">Mass Flow Rate</label>
+              <input id="massFlow" type="number" step="any" value="5242" />
+            </div>
+            <div class="field">
+              <label for="massUnit">Flow Unit</label>
+              <select id="massUnit">
+                <option value="kg/h" selected>kg/h</option>
+                <option value="kg/s">kg/s</option>
+              </select>
+            </div>
+            <div class="field">
+              <label for="p1g">Inlet Pressure</label>
+              <input id="p1g" type="number" step="any" value="22" />
+            </div>
+            <div class="field">
+              <label for="p1gUnit">Pressure Unit</label>
+              <select id="p1gUnit">
+                <option value="barg" selected>barg</option>
+              </select>
+            </div>
+            <div class="field">
+              <label for="tempC">Temperature</label>
+              <input id="tempC" type="number" step="any" value="25" />
+            </div>
+            <div class="field">
+              <label for="tempUnit">Temperature Unit</label>
+              <select id="tempUnit">
+                <option value="C" selected>&deg;C</option>
+              </select>
+            </div>
+            <div class="field">
+              <label for="rho">Gas Density at Flowing Conditions</label>
+              <input id="rho" type="number" step="any" value="19.02" />
+            </div>
+            <div class="field">
+              <label for="rhoUnit">Density Unit</label>
+              <select id="rhoUnit">
+                <option value="kg/m3" selected>kg/m³</option>
+              </select>
+            </div>
+            <div class="field">
+              <label for="muCp">Dynamic Viscosity</label>
+              <input id="muCp" type="number" step="any" value="0.0118" />
+            </div>
+            <div class="field">
+              <label for="muUnit">Viscosity Unit</label>
+              <select id="muUnit">
+                <option value="cP" selected>cP</option>
+              </select>
+            </div>
+            <div class="field">
+              <label for="lengthM">Pipe Length</label>
+              <input id="lengthM" type="number" step="any" value="100" />
+            </div>
+            <div class="field">
+              <label for="lengthUnit">Length Unit</label>
+              <select id="lengthUnit">
+                <option value="m" selected>m</option>
+              </select>
+            </div>
+            <div class="field">
+              <label for="velCrit">Max Velocity Criterion</label>
+              <input id="velCrit" type="number" step="any" value="10" />
+            </div>
+            <div class="field">
+              <label for="velUnit">Velocity Unit</label>
+              <select id="velUnit">
+                <option value="m/s" selected>m/s</option>
+              </select>
+            </div>
+            <div class="field">
+              <label for="dpCrit">Pressure Drop Criterion</label>
+              <input id="dpCrit" type="number" step="any" value="0.1" />
+            </div>
+            <div class="field">
+              <label for="dpUnit">Criterion Unit</label>
+              <select id="dpUnit">
+                <option value="bar/100m" selected>bar/100 m</option>
+              </select>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2>Pipe Characteristics</h2>
+        <div class="section">
+          <div class="fields">
+            <div class="field">
+              <label for="pipeDesc">Pipe Description</label>
+              <input id="pipeDesc" value='4" NPS Sch 40 (manual dimensions)' />
+            </div>
+            <div class="field">
+              <label for="schedule">Schedule / Tag</label>
+              <input id="schedule" value="Sch 40" />
+            </div>
+            <div class="field">
+              <label for="odMm">Pipe OD</label>
+              <input id="odMm" type="number" step="any" value="114.3" />
+            </div>
+            <div class="field">
+              <label for="idMm">Pipe ID</label>
+              <input id="idMm" type="number" step="any" value="102.3" />
+            </div>
+            <div class="field">
+              <label for="roughUm">Roughness</label>
+              <input id="roughUm" type="number" step="any" value="28" />
+            </div>
+            <div class="field">
+              <label for="roughUnit">Roughness Unit</label>
+              <select id="roughUnit">
+                <option value="um" selected>micron</option>
+              </select>
+            </div>
+            <div class="field">
+              <label for="kMinor">Additional Minor Loss Coefficient</label>
+              <input id="kMinor" type="number" step="any" value="0" />
+            </div>
+            <div class="field">
+              <label for="solverTol">Solver Tolerance</label>
+              <input id="solverTol" type="number" step="any" value="1e-6" />
+            </div>
+          </div>
+
+          <div class="btnrow">
+            <button class="primary" onclick="calculate()">Calculate</button>
+            <button class="secondary" onclick="loadCaseStudy()">Load Case Study</button>
+            <button class="ghost" onclick="resetForm()">Reset</button>
+          </div>
+
+          <div class="formula">
+            <div><strong>Implemented relations</strong></div>
+            <div>Area: A = &pi;D²/4</div>
+            <div>Velocity: V = m / (A&rho;)</div>
+            <div>Reynolds: Re = D V &rho; / &mu;</div>
+            <div>Swamee-Jain: f = 0.25 / [log10(&epsilon;/(3.7D) + 5.74/Re<sup>0.9</sup>)]²</div>
+            <div>Head-loss term: K = fL/D + K<sub>minor</sub></div>
+            <div>Isothermal TP-410M solver:
+              m² = [A²&rho; / (K + 2 ln(P1/P2))] &times; [(P1² - P2²)/P1]
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2>Results</h2>
+        <div class="section">
+          <div class="results">
+            <div class="metric">
+              <div class="k">Area</div>
+              <div class="v" id="r_area">0.00822</div>
+              <div class="u">m²</div>
+            </div>
+            <div class="metric">
+              <div class="k">Velocity</div>
+              <div class="v" id="r_vel">9.31</div>
+              <div class="u">m/s</div>
+            </div>
+            <div class="metric">
+              <div class="k">Reynolds No.</div>
+              <div class="v" id="r_re">1.65e6</div>
+              <div class="u">-</div>
+            </div>
+            <div class="metric">
+              <div class="k">Friction Factor</div>
+              <div class="v" id="r_f">0.0152</div>
+              <div class="u">Swamee-Jain</div>
+            </div>
+            <div class="metric">
+              <div class="k">Total K</div>
+              <div class="v" id="r_k">14.88</div>
+              <div class="u">fL/D + Kminor</div>
+            </div>
+            <div class="metric">
+              <div class="k">Outlet Pressure</div>
+              <div class="v" id="r_p2g">21.88</div>
+              <div class="u">barg</div>
+            </div>
+            <div class="metric">
+              <div class="k">Outlet Pressure</div>
+              <div class="v" id="r_p2a">22.89</div>
+              <div class="u">bara</div>
+            </div>
+            <div class="metric">
+              <div class="k">Pressure Drop</div>
+              <div class="v" id="r_dp100">0.12</div>
+              <div class="u">bar/100 m</div>
+            </div>
+          </div>
+
+          <div class="status">
+            <div>
+              <div><strong>Velocity criterion</strong></div>
+              <div class="small">Calculated velocity compared with max allowable value.</div>
+            </div>
+            <div class="badge yes" id="s_vel">PASS</div>
+          </div>
+
+          <div class="status">
+            <div>
+              <div><strong>Pressure-drop criterion</strong></div>
+              <div class="small">Calculated bar/100 m compared with target limit.</div>
+            </div>
+            <div class="badge yes" id="s_dp">PASS</div>
+          </div>
+
+          <div class="note" id="message">
+            Ready. Click <strong>Calculate</strong> to solve the outlet pressure iteratively.
+          </div>
+
+          <table class="table">
+            <tr><th>Item</th><th>Value</th></tr>
+            <tr><td>Mass flow</td><td id="t_mdot">1.4561 kg/s</td></tr>
+            <tr><td>Inlet pressure</td><td id="t_p1">23.0133 bara</td></tr>
+            <tr><td>Temperature</td><td id="t_temp">25.00 °C</td></tr>
+            <tr><td>ID / OD</td><td id="t_pipe">102.3 / 114.3 mm</td></tr>
+            <tr><td>Density / viscosity</td><td id="t_props">19.02 kg/m³ / 0.0118 cP</td></tr>
+            <tr><td>Total pressure drop</td><td id="t_dptotal">0.1231 bar</td></tr>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const ATM_BARA = 1.01325;
+    const BAR_TO_PA = 100000;
+
+    function getNum(id){
+      return parseFloat(document.getElementById(id).value);
+    }
+
+    function setText(id, value){
+      document.getElementById(id).textContent = value;
+    }
+
+    function fmt(x, d=4){
+      if (!isFinite(x)) return "—";
+      return Number(x).toLocaleString(undefined, {
+        minimumFractionDigits: d,
+        maximumFractionDigits: d
+      });
+    }
+
+    function fmtSci(x, d=3){
+      if (!isFinite(x)) return "—";
+      if (Math.abs(x) >= 1e5 || (Math.abs(x) > 0 && Math.abs(x) < 1e-3)) return x.toExponential(d);
+      return fmt(x, d);
+    }
+
+    function badge(id, ok, passText="PASS", failText="FAIL"){
+      const el = document.getElementById(id);
+      el.className = "badge " + (ok ? "yes" : "no");
+      el.textContent = ok ? passText : failText;
+    }
+
+    function loadCaseStudy(){
+      document.getElementById("service").value = "Fuel Gas";
+      document.getElementById("lineNo").value = "001";
+      document.getElementById("massFlow").value = 5242;
+      document.getElementById("massUnit").value = "kg/h";
+      document.getElementById("p1g").value = 22;
+      document.getElementById("tempC").value = 25;
+      document.getElementById("rho").value = 19.02;
+      document.getElementById("muCp").value = 0.0118;
+      document.getElementById("lengthM").value = 100;
+      document.getElementById("velCrit").value = 10;
+      document.getElementById("dpCrit").value = 0.1;
+      document.getElementById("pipeDesc").value = '4" NPS Sch 40 (manual dimensions)';
+      document.getElementById("schedule").value = "Sch 40";
+      document.getElementById("odMm").value = 114.3;
+      document.getElementById("idMm").value = 102.3;
+      document.getElementById("roughUm").value = 28;
+      document.getElementById("kMinor").value = 0;
+      document.getElementById("solverTol").value = 1e-6;
+      calculate();
+    }
+
+    function resetForm(){
+      document.getElementById("service").value = "";
+      document.getElementById("lineNo").value = "";
+      document.getElementById("massFlow").value = "";
+      document.getElementById("p1g").value = "";
+      document.getElementById("tempC").value = "";
+      document.getElementById("rho").value = "";
+      document.getElementById("muCp").value = "";
+      document.getElementById("lengthM").value = "";
+      document.getElementById("velCrit").value = "";
+      document.getElementById("dpCrit").value = "";
+      document.getElementById("pipeDesc").value = "";
+      document.getElementById("schedule").value = "";
+      document.getElementById("odMm").value = "";
+      document.getElementById("idMm").value = "";
+      document.getElementById("roughUm").value = 28;
+      document.getElementById("kMinor").value = 0;
+      document.getElementById("solverTol").value = 1e-6;
+      setText("message","Form cleared.");
+    }
+
+    function solveP2(mdot, A, rho, D, Ktotal, P1abs, tol){
+      const m2 = mdot * mdot;
+
+      function rhs(P2){
+        if (P2 <= 0 || P2 >= P1abs) return NaN;
+        const denom = Ktotal + 2 * Math.log(P1abs / P2);
+        if (denom <= 0) return NaN;
+        return (A*A*rho / denom) * ((P1abs*P1abs - P2*P2) / P1abs);
+      }
+
+      function h(P2){
+        return rhs(P2) - m2;
+      }
+
+      let low = 1.0;
+      let high = P1abs * (1 - 1e-10);
+
+      let hLow = h(low);
+      let hHigh = h(high);
+
+      if (!isFinite(hLow) || !isFinite(hHigh)) return NaN;
+      if (hLow < 0) return NaN;
+      if (hHigh > 0) return NaN;
+
+      let mid = NaN;
+      for (let i = 0; i < 200; i++){
+        mid = 0.5 * (low + high);
+        const hMid = h(mid);
+        if (!isFinite(hMid)) return NaN;
+        if (Math.abs(hMid) < tol) return mid;
+        if (hMid > 0){
+          low = mid;
+        } else {
+          high = mid;
+        }
+      }
+      return mid;
+    }
+
+    function calculate(){
+      try{
+        let massFlow = getNum("massFlow");
+        const massUnit = document.getElementById("massUnit").value;
+        const p1g = getNum("p1g");
+        const tempC = getNum("tempC");
+        const rho = getNum("rho");
+        const muCp = getNum("muCp");
+        const L = getNum("lengthM");
+        const velCrit = getNum("velCrit");
+        const dpCrit = getNum("dpCrit");
+        const odMm = getNum("odMm");
+        const idMm = getNum("idMm");
+        const roughUm = getNum("roughUm");
+        const kMinor = getNum("kMinor");
+        const tol = getNum("solverTol");
+
+        if ([massFlow,p1g,tempC,rho,muCp,L,velCrit,dpCrit,odMm,idMm,roughUm,kMinor,tol].some(v => !isFinite(v))){
+          throw new Error("Please enter all numeric inputs.");
+        }
+        if (idMm <= 0 || odMm <= 0 || L <= 0 || rho <= 0 || muCp <= 0 || roughUm < 0){
+          throw new Error("ID, OD, length, density, and viscosity must be greater than zero.");
+        }
+        if (idMm > odMm){
+          throw new Error("Pipe ID cannot be larger than pipe OD.");
+        }
+
+        const mdot = massUnit === "kg/h" ? massFlow / 3600 : massFlow;
+        const D = idMm / 1000;
+        const A = Math.PI * D * D / 4;
+        const mu = muCp * 0.001;
+        const eps = roughUm / 1e6;
+        const P1abs = (p1g + ATM_BARA) * BAR_TO_PA;
+        const V = mdot / (A * rho);
+        const Re = D * V * rho / mu;
+        const term = (eps / (3.7 * D)) + (5.74 / Math.pow(Re, 0.9));
+        const f = 0.25 / Math.pow(Math.log10(term), 2);
+        const Kfriction = f * L / D;
+        const Ktotal = Kfriction + kMinor;
+
+        const P2abs = solveP2(mdot, A, rho, D, Ktotal, P1abs, tol);
+        if (!isFinite(P2abs)){
+          throw new Error("No valid outlet pressure solution was found. Check your inputs.");
+        }
+
+        const P2bara = P2abs / BAR_TO_PA;
+        const P2barg = P2bara - ATM_BARA;
+        const dPtotalBar = (P1abs - P2abs) / BAR_TO_PA;
+        const dP100 = dPtotalBar * (100 / L);
+        const velOK = V <= velCrit;
+        const dpOK = dP100 <= dpCrit;
+
+        setText("r_area", fmt(A, 5));
+        setText("r_vel", fmt(V, 3));
+        setText("r_re", fmtSci(Re, 3));
+        setText("r_f", fmt(f, 5));
+        setText("r_k", fmt(Ktotal, 3));
+        setText("r_p2g", fmt(P2barg, 4));
+        setText("r_p2a", fmt(P2bara, 4));
+        setText("r_dp100", fmt(dP100, 4));
+
+        badge("s_vel", velOK);
+        badge("s_dp", dpOK);
+
+        setText("t_mdot", `${fmt(mdot, 4)} kg/s`);
+        setText("t_p1", `${fmt(P1abs / BAR_TO_PA, 4)} bara`);
+        setText("t_temp", `${fmt(tempC, 2)} °C`);
+        setText("t_pipe", `${fmt(idMm, 1)} / ${fmt(odMm, 1)} mm`);
+        setText("t_props", `${fmt(rho, 3)} kg/m³ / ${fmt(muCp, 4)} cP`);
+        setText("t_dptotal", `${fmt(dPtotalBar, 4)} bar`);
+
+        const message = [
+          `Solved successfully.`,
+          `Outlet pressure = ${fmt(P2barg,4)} barg (${fmt(P2bara,4)} bara).`,
+          `Velocity = ${fmt(V,3)} m/s and ΔP = ${fmt(dP100,4)} bar/100 m.`
+        ].join(" ");
+        setText("message", message);
+      } catch(err){
+        setText("message", err.message);
+        badge("s_vel", false);
+        badge("s_dp", false);
+      }
+    }
+
+    loadCaseStudy();
+  </script>
+</body>
+</html>
