@@ -1,17 +1,23 @@
-# Gas Line Sizing – Crane TP-410M
+# Process Hydraulics Workbench (PHW)
 
-Single-file, browser-based isothermal gas-line sizing calculator (Swamee-Jain friction factor, iterative outlet-pressure solver, velocity and pressure-drop checks).
+Browser-based screening tool for line sizing, pump/system curve performance, industrial troubleshooting and debottlenecking. No build step, no dependencies.
 
-## How to run
+## Modules (v1.0.0)
+- Gas Line Sizing: Crane TP-410M isothermal flow, Swamee-Jain friction, outlet pressure, outlet velocity, Mach, choke check, max flow within criteria, NPS size scan.
+- Liquid Line & Pump Curve: vendor curve fit, system curve, operating point, efficiency, power, NPSHa vs NPSHr, % BEP, affinity-law speed estimate, findings list.
+- Criteria: editable profiles (Generic, ADNOC project values, EGA project values) stored in the browser.
+- Roadmap: planned extensions.
 
-There is no build step, server, or dependency. GitHub shows `.html` files as source code, so the app will not run when you open it on github.com.
+## Run
+Open `index.html` in a browser (keep the `src` folder next to it), or enable GitHub Pages (Settings > Pages > main / root).
 
-**Option 1 – Locally**
-1. Click `gas-line-sizing-tp410m.html` > Download raw file (or clone the repo).
-2. Double-click the file to open it in any modern browser.
+## ADNOC / EGA
+No proprietary standard values are embedded. Enter limits from the governing ADNOC or EGA project specification and piping class in the Criteria tab.
 
-**Option 2 – GitHub Pages (online)**
-1. Repo Settings > Pages > Source: Deploy from a branch > `main` / `(root)` > Save.
-2. Open `https://aitestskd-dotcom.github.io/gas-line-sizing-tp410m/` after about a minute.
+## Quality
+`node tests/core.test.js` runs the engine tests. Gas solver and pump operating point were cross-checked against an independent SciPy implementation. Screening tool: results must be verified by a qualified engineer.
 
-Click **Load Case Study** to reload the default fuel-gas example.
+## Extending
+Modules register with `PHW.register({id, title, render(el), calc()})` and reuse `PHW_CORE`.
+
+`gas-line-sizing-tp410m.html` is the original v0 calculator, kept for reference.
