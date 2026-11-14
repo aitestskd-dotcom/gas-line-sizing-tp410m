@@ -1,7 +1,267 @@
-<!-- Sprint 1 integration patch applied additively. -->
-<!-- 1. Added <script src="src/pid-schema.js"></script> after core.js. -->
-<!-- 2. Added P&ID Investigation module before Shell. -->
-<!-- 3. Added pid to nav order. -->
-<!-- 4. Extended exportJSON to include pidDoc. -->
-<!-- 5. Extended importJSON to validate and restore pidDoc. -->
-<!-- Full index.html content is not included in this placeholder due to tool payload limits. -->
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Process Hydraulics Workbench (PHW) – Line Sizing, Pump Curves, Debottlenecking</title>
+<style>
+:root{--bg:#e9ecef;--panel:#fff;--line:#b8c0c8;--ink:#1c2630;--mut:#5a6672;--hdr:#1f2933;--hdr2:#323f4b;--acc:#f2a900;--ok:#1b7f3b;--bad:#b3261e;--warn:#b26a00;--grid:#dde2e7}
+*{box-sizing:border-box}
+body{margin:0;font:13px/1.4 "Segoe UI",Roboto,Arial,sans-serif;background:var(--bg);color:var(--ink)}
+header.app{background:var(--hdr);color:#fff;border-bottom:4px solid var(--acc)}
+.top{display:flex;justify-content:space-between;align-items:center;padding:10px 18px;gap:12px;flex-wrap:wrap}
+.top h1{margin:0;font-size:19px;letter-spacing:.04em;text-transform:uppercase}
+.top .sub{color:#b8c4d0;font-size:12px}
+.top .ver{font-size:11px;color:#b8c4d0;text-align:right}
+.ds{display:grid;grid-template-columns:repeat(7,1fr);background:var(--hdr2);border-top:1px solid #4a5865}
+.ds div{padding:5px 10px;border-right:1px solid #4a5865}
+.ds label{display:block;font-size:10px;color:#9fb0c0;text-transform:uppercase;letter-spacing:.06em}
+.ds input{width:100%;background:transparent;border:0;border-bottom:1px dashed #6b7a88;color:#fff;font-size:12px;padding:2px 0}
+nav{display:flex;gap:2px;background:#cfd5db;padding:6px 18px 0;flex-wrap:wrap;border-bottom:1px solid var(--line)}
+nav button{border:1px solid var(--line);border-bottom:0;background:#e1e5e9;color:var(--ink);padding:8px 14px;font-weight:600;font-size:12px;cursor:pointer;text-transform:uppercase;letter-spacing:.03em}
+nav button.on{background:var(--panel);border-top:3px solid var(--acc);padding-top:6px}
+main{padding:14px 18px 30px;max-width:1500px;margin:0 auto}
+.panel{display:none}.panel.on{display:block}
+.grid{display:grid;grid-template-columns:1fr 1fr 1.1fr;gap:12px}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+@media(max-width:1100px){.grid,.grid2{grid-template-columns:1fr}.ds{grid-template-columns:repeat(2,1fr)}}
+.card{background:var(--panel);border:1px solid var(--line);margin-bottom:12px}
+.card h2{margin:0;padding:8px 12px;background:#f1f3f5;border-bottom:1px solid var(--line);font-size:12px;text-transform:uppercase;letter-spacing:.06em;border-left:4px solid var(--acc)}
+.body{padding:10px 12px}
+.f{display:grid;grid-template-columns:1fr 110px 52px;gap:6px;align-items:center;margin-bottom:6px}
+.f label{color:var(--mut);font-weight:600;font-size:12px}
+.f .u{color:var(--mut);font-size:11px}
+input,select,textarea{font:inherit;border:1px solid #9aa5b1;padding:4px 6px;background:#fff;width:100%;border-radius:0}
+input:focus,select:focus,textarea:focus{outline:2px solid var(--acc);outline-offset:-1px}
+textarea{font-family:Consolas,monospace;height:150px}
+table{width:100%;border-collapse:collapse;font-size:12px}
+th,td{border:1px solid var(--grid);padding:4px 8px;text-align:right}
+th{background:#f1f3f5;text-align:center;font-size:11px;text-transform:uppercase;letter-spacing:.04em}
+td:first-child,th:first-child{text-align:left}
+tr.cur td{background:#fff6dc;font-weight:700}
+.badge{display:inline-block;min-width:60px;text-align:center;padding:2px 8px;color:#fff;font-weight:700;font-size:11px;letter-spacing:.05em}
+.ok{background:var(--ok)}.fail{background:var(--bad)}.warn{background:var(--warn)}
+.row{display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid var(--grid)}
+.msg{margin-top:8px;padding:8px 10px;background:#f6f7f8;border-left:4px solid var(--mut);font-size:12px}
+.msg.bad{border-color:var(--bad)}
+.find{list-style:none;margin:0;padding:0}
+.find li{padding:6px 8px 6px 10px;border-left:4px solid var(--mut);background:#f6f7f8;margin-bottom:5px;font-size:12px}
+.find li.ok{border-color:var(--ok);background:#eef7f0;color:var(--ink)}
+.find li.warn{border-color:var(--warn);background:#fdf3e3;color:var(--ink)}
+.find li.fail{border-color:var(--bad);background:#fbeceb;color:var(--ink)}
+.kv{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+.kv div{border:1px solid var(--grid);padding:6px 8px}
+.kv small{display:block;color:var(--mut);font-size:10px;text-transform:uppercase;letter-spacing:.05em}
+.kv b{font-size:17px}
+.btn{border:1px solid #1f2933;background:#1f2933;color:#fff;padding:6px 12px;font-weight:600;cursor:pointer;margin-right:6px;width:auto;font-size:12px}
+.btn.alt{background:#fff;color:#1f2933}
+canvas{width:100%;height:340px;display:block;background:#fff}
+.note{color:var(--mut);font-size:11px;margin-top:6px}
+footer{padding:10px 18px;color:var(--mut);font-size:11px;border-top:1px solid var(--line)}
+@media print{nav,.btn,.noprint{display:none!important}.panel{display:block!important;page-break-after:always}header.app{background:#fff;color:#000;border-bottom:2px solid #000}.ds{background:#fff}.ds input,.top .sub,.ds label,.top .ver{color:#000}body{background:#fff}}
+</style></head><body>
+<header class="app"><div class="top"><div><h1>Process Hydraulics Workbench</h1><div class="sub">Line sizing · pump &amp; system curves · industrial troubleshooting · debottlenecking</div></div><div class="ver">PHW v1.0.0<br>Screening tool – verify against project specifications</div></div>
+<div class="ds"><div><label>Project</label><input id="dProj" value=""></div><div><label>Document No.</label><input id="dDoc" value=""></div><div><label>Rev.</label><input id="dRev" value="A"></div><div><label>Date</label><input id="dDate"></div><div><label>Prepared</label><input id="dBy"></div><div><label>Checked</label><input id="dChk"></div><div><label>Approved</label><input id="dApp"></div></div></header>
+<nav id="nav"></nav>
+<div style="padding:6px 18px 0;text-align:right" class="noprint"><button class="btn alt" id="b_print">Print datasheet</button><button class="btn alt" id="b_exp">Export case (JSON)</button><label class="btn alt" style="display:inline-block;margin:0">Import case<input type="file" id="b_imp" accept=".json" style="display:none"></label></div>
+<main id="main"></main>
+<footer>Reference frameworks: ADNOC and EGA project specifications – criteria are user-entered in the Criteria tab; no proprietary standard values are embedded. Methods: Crane TP-410M isothermal gas flow, Swamee-Jain friction, pump/system curve intersection, affinity laws, NPSH margin check. Results are for screening and must be verified by a qualified engineer.</footer>
+<script src="src/core.js"></script>
+<script src="src/pid-schema.js"></script>
+<script>
+const $=id=>document.getElementById(id), num=id=>parseFloat($(id).value);
+const REG=[]; const PHW={version:'1.0.0',register:m=>REG.push(m)};
+function fld(id,label,val,unit,type){ return `<div class="f"><label for="${id}">${label}</label><input id="${id}" ${type==='text'?'':'type="number" step="any"'} value="${val}"><span class="u">${unit||''}</span></div>`; }
+function badge(ok,t,f){ return `<span class="badge ${ok?'ok':'fail'}">${ok?(t||'PASS'):(f||'FAIL')}</span>`; }
+function fmt(x,d=3){ return isFinite(x)? Number(x).toLocaleString('en-US',{minimumFractionDigits:d,maximumFractionDigits:d}) : '—'; }
+const C=PHW_CORE;
+
+// ---------- Criteria profiles ----------
+const DEF={vGas:10,dpGas:0.1,vLiq:3,vSuc:1.5,dpLiq:0.5,npshRatio:1.25,porLow:70,porHigh:120};
+let PROF=JSON.parse(localStorage.getItem('phw.profiles')||'null')||{Generic:{...DEF},'ADNOC (project values)':{...DEF},'EGA (project values)':{...DEF}};
+let CUR='Generic';
+function critFields(){return [['vGas','Gas max velocity (outlet)','m/s'],['dpGas','Gas ΔP limit','bar/100 m'],['vLiq','Liquid discharge max velocity','m/s'],['vSuc','Liquid suction max velocity','m/s'],['dpLiq','Liquid ΔP limit','bar/100 m'],['npshRatio','NPSHa / NPSHr min ratio','–'],['porLow','Preferred op. range low','% BEP'],['porHigh','Preferred op. range high','% BEP']];}
+PHW.register({id:'crit',title:'Criteria',render(el){
+  el.innerHTML=`<div class="card"><h2>Design criteria profile</h2><div class="body">
+  <div class="f"><label>Profile</label><select id="cr_prof">${Object.keys(PROF).map(k=>`<option>${k}</option>`).join('')}</select><span></span></div>
+  ${critFields().map(([k,l,u])=>fld('cr_'+k,l,PROF[CUR][k],u)).join('')}
+  <button class="btn" id="cr_apply">Apply to modules</button><button class="btn alt" id="cr_save">Save profile</button><button class="btn alt" id="cr_reset">Reset to generic</button>
+  <p class="note">Generic starting values are common screening numbers, not taken from any standard. The ADNOC and EGA profiles are empty templates pre-filled with the generic numbers: enter the limits from the governing ADNOC or EGA project specification / piping class and save. Values are stored in this browser only.</p></div></div>`;
+  const load=()=>critFields().forEach(([k])=>$('cr_'+k).value=PROF[CUR][k]);
+  $('cr_prof').onchange=e=>{CUR=e.target.value;load();};
+  $('cr_save').onclick=()=>{critFields().forEach(([k])=>PROF[CUR][k]=num('cr_'+k));localStorage.setItem('phw.profiles',JSON.stringify(PROF));};
+  $('cr_reset').onclick=()=>{PROF[CUR]={...DEF};load();};
+  $('cr_apply').onclick=()=>{ const c=critFields().reduce((o,[k])=>(o[k]=num('cr_'+k),o),{});
+    $('velCrit').value=c.vGas;$('dpCrit').value=c.dpGas;$('l_vd').value=c.vLiq;$('l_vs').value=c.vSuc;$('l_dp').value=c.dpLiq;$('l_npsh').value=c.npshRatio;$('l_pl').value=c.porLow;$('l_ph').value=c.porHigh;
+    PHW.recalc(); show('gas'); };
+}});
+
+// ---------- Gas module ----------
+const GAS_DEF={service:'Fuel Gas',lineNo:'001',massFlow:5242,p1g:22,tempC:25,rho:19.02,muCp:0.0118,L:100,nps:'4',odMm:114.3,idMm:102.3,roughUm:28,kMinor:0,velCrit:10,dpCrit:0.1,uplift:20};
+PHW.register({id:'gas',title:'Gas Line Sizing',render(el){
+ const d=GAS_DEF;
+ el.innerHTML=`<div class="card"><h2 style="font-size:14px">Line Sizing – Crane TP-410M Method <span class="note" style="text-transform:none;letter-spacing:0">(isothermal compressible flow, Swamee-Jain friction)</span></h2></div>
+ <div class="grid">
+ <div class="card"><h2>Flow conditions</h2><div class="body">
+  ${fld('service','Service',d.service,'','text')}${fld('lineNo','Line No.',d.lineNo,'','text')}
+  ${fld('massFlow','Mass flow',d.massFlow,'kg/h')}${fld('p1g','Inlet pressure',d.p1g,'barg')}${fld('tempC','Temperature',d.tempC,'°C')}
+  ${fld('rho','Density at inlet P, T',d.rho,'kg/m³')}${fld('muCp','Dynamic viscosity',d.muCp,'cP')}${fld('L','Pipe length',d.L,'m')}
+  ${fld('velCrit','Max velocity (outlet)',d.velCrit,'m/s')}${fld('dpCrit','ΔP criterion',d.dpCrit,'bar/100m')}</div></div>
+ <div class="card"><h2>Pipe characteristics</h2><div class="body">
+  <div class="f"><label for="nps">Nominal size (Sch 40)</label><select id="nps">${C.NPS.map(s=>`<option ${s.nps===d.nps?'selected':''}>${s.nps}</option>`).join('')}<option>Manual</option></select><span class="u">NPS</span></div>
+  ${fld('odMm','Pipe OD',d.odMm,'mm')}${fld('idMm','Pipe ID',d.idMm,'mm')}${fld('roughUm','Roughness',d.roughUm,'µm')}${fld('kMinor','Fittings K (sum)',d.kMinor,'–')}
+  <p class="note">Sch 40 nominal dimensions are for screening; confirm wall thickness against the project piping class.</p>
+  <button class="btn" id="g_case">Load case study</button><button class="btn alt" id="g_clear">Clear</button></div></div>
+ <div class="card"><h2>Results</h2><div class="body"><div class="kv" id="g_kv"></div><div id="g_st"></div><div class="msg" id="g_msg"></div></div></div></div>
+ <div class="grid2"><div class="card"><h2>Debottleneck – current pipe</h2><div class="body" id="g_db"></div></div>
+ <div class="card"><h2>Debottleneck – size scan</h2><div class="body">${fld('uplift','Target flow uplift',d.uplift,'%')}<div id="g_scan"></div></div></div></div>`;
+ $('nps').onchange=()=>{const s=C.NPS.find(x=>x.nps===$('nps').value); if(s){$('odMm').value=s.od;$('idMm').value=s.id;} PHW.recalc();};
+ $('g_case').onclick=()=>{Object.entries(d).forEach(([k,v])=>{if($(k))$(k).value=v;});PHW.recalc();};
+ $('g_clear').onclick=()=>{['massFlow','p1g','tempC','rho','muCp','L'].forEach(k=>$(k).value='');PHW.recalc();};
+ el.querySelectorAll('input').forEach(i=>i.oninput=()=>{ if(i.id==='idMm'||i.id==='odMm')$('nps').value='Manual'; PHW.recalc();});
+},
+calc(){
+ const g=id=>num(id);
+ const inp={mdot:g('massFlow')/3600,P1:(g('p1g')+C.ATM)*C.BAR,rho1:g('rho'),mu:g('muCp')*1e-3,L:g('L'),D:g('idMm')/1000,eps:g('roughUm')*1e-6,kMinor:g('kMinor')};
+ const c={vmax:g('velCrit'),dpmax:g('dpCrit')};
+ const msg=$('g_msg'); msg.className='msg';
+ const bad=[inp.mdot,inp.P1,inp.rho1,inp.mu,inp.L,inp.D,inp.eps,inp.kMinor,c.vmax,c.dpmax].some(v=>!isFinite(v));
+ if(bad||inp.mdot<=0||inp.D<=0||inp.L<=0||inp.rho1<=0||inp.mu<=0||g('idMm')>g('odMm')){
+   msg.className='msg bad'; msg.textContent='Enter valid positive numeric inputs (ID must not exceed OD).'; ['g_kv','g_st','g_db','g_scan'].forEach(i=>$(i).innerHTML=''); return; }
+ const r=C.gasSolve(inp);
+ if(r.choked){ msg.className='msg bad'; msg.textContent=`Flow exceeds the choked-flow limit of ${fmt(r.mmax*3600,0)} kg/h for this line. Increase pipe size, reduce length or reduce flow.`;
+   $('g_kv').innerHTML=''; $('g_st').innerHTML=`<div class="row"><span>Choke check</span>${badge(false)}</div>`; }
+ else{
+  const p=C.gasPass(r,c);
+  const kv=[['Area (m²)',fmt(r.A,5)],['Velocity in (m/s)',fmt(r.V1,2)],['Velocity out (m/s)',fmt(r.V2,2)],['Mach out (isothermal)',fmt(r.Mach2,3)],['Reynolds',r.Re.toExponential(3)],['Friction factor',fmt(r.f,5)],['Total K',fmt(r.K,3)],['Outlet (barg)',fmt(r.P2/C.BAR-C.ATM,3)],['Outlet (bara)',fmt(r.P2/C.BAR,3)],['ΔP total (bar)',fmt(r.dP,4)],['ΔP (bar/100 m)',fmt(r.dP100,4)],['Choke margin',fmt(r.mmax/inp.mdot,2)+'×']];
+  $('g_kv').innerHTML=kv.map(([k,v])=>`<div><small>${k}</small><b>${v}</b></div>`).join('');
+  $('g_st').innerHTML=`<div class="row"><span>Velocity ≤ ${c.vmax} m/s</span>${badge(p.vel)}</div><div class="row"><span>ΔP ≤ ${c.dpmax} bar/100 m</span>${badge(p.dp)}</div><div class="row"><span>Not choked</span>${badge(true)}</div>`;
+  msg.textContent=`Solved. Outlet ${fmt(r.P2/C.BAR-C.ATM,3)} barg; outlet velocity ${fmt(r.V2,2)} m/s; ΔP ${fmt(r.dP100,4)} bar/100 m. Overall: ${p.all?'line meets both criteria.':'line does NOT meet criteria.'}`;
+  if(!p.all) msg.className='msg bad';
+ }
+ const mf=C.gasMaxFlow(inp,c);
+ $('g_db').innerHTML=`<div class="kv"><div><small>Max flow within criteria</small><b>${fmt(mf.mdot*3600,0)} kg/h</b></div><div><small>Headroom vs current</small><b>${fmt((mf.mdot/inp.mdot-1)*100,1)} %</b></div><div><small>Limiting criterion</small><b style="font-size:14px">${mf.limit}</b></div><div><small>Choked-flow limit</small><b>${fmt(r.mmax*3600,0)} kg/h</b></div></div><p class="note">Negative headroom means the line is already a bottleneck at the current flow.</p>`;
+ const up=g('uplift'); const flow=inp.mdot*(1+(isFinite(up)?up:0)/100);
+ const sc=C.gasScan(inp,c,flow); const first=sc.find(x=>x.p.all);
+ $('g_scan').innerHTML=`<table><tr><th>NPS</th><th>ID mm</th><th>V out m/s</th><th>ΔP bar/100m</th><th>Result</th></tr>${sc.map(x=>`<tr class="${first&&x.nps===first.nps?'cur':''}"><td>${x.nps}"</td><td>${x.id}</td><td>${x.r.choked?'choked':fmt(x.r.V2,2)}</td><td>${x.r.choked?'–':fmt(x.r.dP100,3)}</td><td>${badge(x.p.all)}</td></tr>`).join('')}</table><p class="note">Flow ${fmt(flow*3600,0)} kg/h. ${first?`Smallest passing size: NPS ${first.nps}.`:'No listed size passes.'}</p>`;
+ PHW.last.gas={inp,r,c};
+}});
+
+// ---------- Liquid + pump module ----------
+const L_DEF={rho:998,mu:1.0,pvap:0.032,sID:254.5,sL:15,sK:3,dID:202.7,dL:800,dK:20,rough:45,zs:3,zd:20,Ps:0,Pd:2,reqQ:250,speed:1.0,vd:3,vs:1.5,dp:0.5,npsh:1.25,pl:70,ph:120,
+ curve:'0, 60, 0, 2\n100, 58, 55, 2.5\n200, 53, 72, 3.2\n300, 45, 78, 4.5\n400, 34, 72, 6.5\n500, 20, 55, 9.5'};
+PHW.register({id:'liq',title:'Liquid Line & Pump Curve',render(el){
+ const d=L_DEF;
+ el.innerHTML=`<div class="card"><h2 style="font-size:14px">Liquid Line Hydraulics &amp; Pump Performance <span class="note" style="text-transform:none;letter-spacing:0">(pump curve × system curve, NPSH, affinity laws)</span></h2></div>
+ <div class="grid">
+ <div class="card"><h2>Fluid &amp; static conditions</h2><div class="body">
+  ${fld('l_rho','Density',d.rho,'kg/m³')}${fld('l_mu','Viscosity',d.mu,'cP')}${fld('l_pv','Vapour pressure',d.pvap,'bara')}
+  ${fld('l_zs','Source level above pump CL',d.zs,'m')}${fld('l_zd','Destination elev. above pump CL',d.zd,'m')}
+  ${fld('l_ps','Source surface pressure',d.Ps,'barg')}${fld('l_pd','Destination pressure',d.Pd,'barg')}
+  ${fld('l_req','Required flow',d.reqQ,'m³/h')}${fld('l_n','Speed ratio (N/N rated)',d.speed,'–')}</div></div>
+ <div class="card"><h2>Piping</h2><div class="body">
+  ${fld('l_sid','Suction ID',d.sID,'mm')}${fld('l_sl','Suction length',d.sL,'m')}${fld('l_sk','Suction fittings K',d.sK,'–')}
+  ${fld('l_did','Discharge ID',d.dID,'mm')}${fld('l_dl','Discharge length',d.dL,'m')}${fld('l_dk','Discharge fittings K (incl. valves)',d.dK,'–')}
+  ${fld('l_ru','Roughness',d.rough,'µm')}
+  ${fld('l_vd','Max discharge velocity',d.vd,'m/s')}${fld('l_vs','Max suction velocity',d.vs,'m/s')}${fld('l_dp','ΔP criterion',d.dp,'bar/100m')}
+  ${fld('l_npsh','Min NPSHa/NPSHr',d.npsh,'–')}${fld('l_pl','Preferred range low',d.pl,'% BEP')}${fld('l_ph','Preferred range high',d.ph,'% BEP')}</div></div>
+ <div class="card"><h2>Pump curve (vendor data)</h2><div class="body">
+  <textarea id="l_curve" spellcheck="false">${d.curve}</textarea>
+  <p class="note">One point per line: flow m³/h, head m, efficiency %, NPSHr m (at rated speed, ascending flow, first point shut-off). Replace with the vendor curve.</p>
+  <button class="btn" id="l_case">Load case study</button></div></div></div>
+ <div class="grid2"><div class="card"><h2>Pump &amp; system curves</h2><div class="body"><canvas id="l_cv"></canvas><div id="l_leg" class="note"></div></div></div>
+ <div><div class="card"><h2>Operating point</h2><div class="body"><div class="kv" id="l_kv"></div></div></div>
+ <div class="card"><h2>Troubleshooting / debottleneck findings</h2><div class="body"><ul class="find" id="l_find"></ul></div></div></div></div>
+ <div class="card"><h2>Line size scan at required flow (discharge line)</h2><div class="body" id="l_scan"></div></div>`;
+ $('l_case').onclick=()=>{ const m={l_rho:'rho',l_mu:'mu',l_pv:'pvap',l_zs:'zs',l_zd:'zd',l_ps:'Ps',l_pd:'Pd',l_req:'reqQ',l_n:'speed',l_sid:'sID',l_sl:'sL',l_sk:'sK',l_did:'dID',l_dl:'dL',l_dk:'dK',l_ru:'rough',l_vd:'vd',l_vs:'vs',l_dp:'dp',l_npsh:'npsh',l_pl:'pl',l_ph:'ph',l_curve:'curve'}; Object.entries(m).forEach(([i,k])=>$(i).value=d[k]); PHW.recalc(); };
+ el.querySelectorAll('input,textarea').forEach(i=>i.oninput=PHW.recalc);
+},
+calc(){
+ const g=num, ul=$('l_find');
+ const pts=$('l_curve').value.split('\n').map(l=>l.trim().split(/[\s,;]+/).map(Number)).filter(a=>a.length>=4&&a.every(isFinite)).map(a=>({Q:a[0],H:a[1],eta:a[2],npshr:a[3]})).sort((a,b)=>a.Q-b.Q);
+ const s={fluid:{rho:g('l_rho'),mu:g('l_mu')*1e-3,pvap:g('l_pv')},suc:{D:g('l_sid')/1000,L:g('l_sl'),eps:g('l_ru')*1e-6,K:g('l_sk')},dis:{D:g('l_did')/1000,L:g('l_dl'),eps:g('l_ru')*1e-6,K:g('l_dk')},zs:g('l_zs'),zd:g('l_zd'),Ps:g('l_ps'),Pd:g('l_pd')};
+ const crit={vLiq:g('l_vd'),vSuc:g('l_vs'),npshRatio:g('l_npsh'),porLow:g('l_pl'),porHigh:g('l_ph')};
+ const n=g('l_n'), req=g('l_req');
+ const flat=[s.fluid.rho,s.fluid.mu,s.fluid.pvap,s.suc.D,s.suc.L,s.dis.D,s.dis.L,s.zs,s.zd,s.Ps,s.Pd,n,req,crit.npshRatio].concat(Object.values(s.suc),Object.values(s.dis));
+ if(pts.length<3||flat.some(v=>!isFinite(v))||n<=0||s.fluid.rho<=0||s.suc.D<=0||s.dis.D<=0){ ul.innerHTML='<li class="fail">Enter valid inputs and at least 3 pump-curve points.</li>'; $('l_kv').innerHTML=''; return; }
+ const a=C.pumpAnalyse(s,pts,n,req,crit); PHW.last.liq={s,pts,a};
+ ul.innerHTML=a.findings.map(f=>`<li class="${f.level}">${f.text}</li>`).join('');
+ if(a.noFlow){ $('l_kv').innerHTML=''; } else {
+  const kv=[['Flow (m³/h)',fmt(a.Q,1)],['Head (m)',fmt(a.H,1)],['Efficiency (%)',fmt(a.eta,1)],['Shaft power (kW)',fmt(a.shaftKW,1)],['NPSHa (m)',fmt(a.npsha,2)],['NPSHr (m)',fmt(a.npshr,2)],['NPSHa / NPSHr',fmt(a.npshRatio,2)],['% of BEP flow',fmt(a.bepRatio*100,0)],['Discharge vel. (m/s)',fmt(a.Vd,2)],['Suction vel. (m/s)',fmt(a.Vs,2)],['Friction share of head',fmt(a.fricShare*100,0)+' %'],['Shut-off head (m)',fmt(a.shutoff,1)]];
+  $('l_kv').innerHTML=kv.map(([k,v])=>`<div><small>${k}</small><b>${v}</b></div>`).join('');
+ }
+ const qreq=req>0?req:(a.Q||100);
+ const sc=C.liqScan(s.dis,s.fluid,qreq,crit.vLiq,g('l_dp')); const first=sc.find(x=>x.pass);
+ $('l_scan').innerHTML=`<table><tr><th>NPS</th><th>ID mm</th><th>V m/s</th><th>ΔP bar/100 m</th><th>Result</th></tr>${sc.map(x=>`<tr class="${first&&x.nps===first.nps?'cur':''}"><td>${x.nps}"</td><td>${x.id}</td><td>${fmt(x.V,2)}</td><td>${fmt(x.dp100,3)}</td><td>${badge(x.pass)}</td></tr>`).join('')}</table><p class="note">At ${fmt(qreq,0)} m³/h and the discharge length/roughness above, ${first?'smallest passing size is NPS '+first.nps+'.':'no listed size passes.'}</p>`;
+ drawChart();
+}});
+
+function drawChart(){
+ const cv=$('l_cv'); if(!cv||!PHW.last.liq||cv.offsetParent===null) return;
+ const {s,pts,a}=PHW.last.liq; const dpr=window.devicePixelRatio||1;
+ const W=cv.clientWidth,H=cv.clientHeight; cv.width=W*dpr; cv.height=H*dpr; const x=cv.getContext('2d'); x.scale(dpr,dpr); x.clearRect(0,0,W,H);
+ const n=a.n, qmax=pts[pts.length-1].Q*n*1.1, hmax=Math.max(a.shutoff, ...pts.map(p=>p.H*n*n))*1.1;
+ const m={l:48,r:44,t:14,b:36}, pw=W-m.l-m.r, ph=H-m.t-m.b;
+ const X=q=>m.l+q/qmax*pw, Y=h=>m.t+ph-h/hmax*ph, YE=e=>m.t+ph-e/100*ph;
+ x.font='11px Segoe UI,Arial';x.strokeStyle='#dde2e7';x.fillStyle='#5a6672';
+ for(let i=0;i<=5;i++){const q=qmax*i/5,h=hmax*i/5; x.beginPath();x.moveTo(X(q),m.t);x.lineTo(X(q),m.t+ph);x.stroke();x.beginPath();x.moveTo(m.l,Y(h));x.lineTo(m.l+pw,Y(h));x.stroke();
+   x.textAlign='center';x.fillText(q.toFixed(0),X(q),H-20);x.textAlign='right';x.fillText(h.toFixed(0),m.l-5,Y(h)+3);x.textAlign='left';x.fillText((i*20)+'%',m.l+pw+5,YE(i*20)+3);}
+ x.fillStyle='#1c2630';x.textAlign='center';x.fillText('Flow (m³/h)',m.l+pw/2,H-4);x.save();x.translate(11,m.t+ph/2);x.rotate(-Math.PI/2);x.fillText('Head (m)',0,0);x.restore();
+ if(a.bepQ){x.fillStyle='rgba(27,127,59,.10)';x.fillRect(X(a.bepQ*crit_v('l_pl')/100),m.t,X(a.bepQ*crit_v('l_ph')/100)-X(a.bepQ*crit_v('l_pl')/100),ph);}
+ const line=(f,col,w,dash)=>{x.beginPath();x.strokeStyle=col;x.lineWidth=w;x.setLineDash(dash||[]);let st=false;for(let k=0;k<=200;k++){const q=qmax*k/200,h=f(q); if(h<0||h>hmax){continue;} if(!st){x.moveTo(X(q),Y(h));st=true;}else x.lineTo(X(q),Y(h));}x.stroke();x.setLineDash([]);};
+ line(q=>C.pumpHead(a.coef,q,n),'#1f2933',2.5);
+ line(q=>C.sysHead(s,q).H,'#b3261e',2.5);
+ x.beginPath();x.strokeStyle='#f2a900';x.lineWidth=2;x.setLineDash([5,3]);pts.forEach((p,i)=>{const px=X(p.Q*n),py=YE(p.eta);i?x.lineTo(px,py):x.moveTo(px,py);});x.stroke();x.setLineDash([]);
+ if(a.Q){x.fillStyle='#f2a900';x.strokeStyle='#1c2630';x.lineWidth=1.5;x.beginPath();x.arc(X(a.Q),Y(a.H),6,0,7);x.fill();x.stroke();
+   x.fillStyle='#1c2630';x.textAlign='left';x.fillText(`OP ${a.Q.toFixed(0)} m³/h @ ${a.H.toFixed(1)} m`,Math.min(X(a.Q)+9,W-150),Y(a.H)-9);}
+ const rq=num('l_req'); if(rq>0){x.strokeStyle='#5a6672';x.lineWidth=1;x.setLineDash([2,3]);x.beginPath();x.moveTo(X(rq),m.t);x.lineTo(X(rq),m.t+ph);x.stroke();x.setLineDash([]);x.fillStyle='#5a6672';x.textAlign='left';x.fillText('required',X(rq)+3,m.t+10);}
+ $('l_leg').innerHTML='<b style="color:#1f2933">━</b> Pump head &nbsp; <b style="color:#b3261e">━</b> System head &nbsp; <b style="color:#f2a900">╍</b> Efficiency (right axis) &nbsp; <span style="color:#1b7f3b">▮</span> Preferred range % of BEP &nbsp; ● Operating point';
+}
+function crit_v(id){return num(id);}
+
+// ---------- P&ID investigation ----------
+let pidDoc=null,pidGraph=null;
+function pidClear(){pidDoc=null;pidGraph=null;$('pid_select').replaceChildren();$('pid_trace').textContent='';$('pid_trace_btn').disabled=true;}
+function pidValidate(){
+ pidClear();
+ try{
+  const candidate=JSON.parse($('pid_json').value);
+  const errors=PID_SCHEMA.validate(candidate);
+  if(errors.length)throw new Error(errors.join('; '));
+  const graph=PID_SCHEMA.buildGraph(candidate);
+  pidDoc=candidate;pidGraph=graph;
+  candidate.elements.forEach(element=>{const option=document.createElement('option');option.value=element.id;option.textContent=element.tag+' ('+element.type+')';$('pid_select').appendChild(option);});
+  $('pid_trace_btn').disabled=!candidate.elements.length;
+  $('pid_status').textContent='Valid P&ID: '+candidate.elements.length+' elements; '+candidate.connections.length+' connections.';
+  $('pid_status').className='msg';
+  return true;
+ }catch(error){$('pid_status').textContent='P&ID validation failed: '+error.message;$('pid_status').className='msg bad';return false;}
+}
+PHW.register({id:'pid',title:'P&ID Investigation',render(el){
+ el.innerHTML='<div class="card"><h2>P&amp;ID Investigation</h2><div class="body"><label for="pid_json">P&amp;ID JSON</label><textarea id="pid_json" spellcheck="false"></textarea><button class="btn" id="pid_sample">Load sample</button><label class="btn alt">Import P&amp;ID JSON<input type="file" id="pid_file" accept=".json,application/json" hidden></label><button class="btn alt" id="pid_validate">Validate and build graph</button><div class="msg" id="pid_status" role="status" aria-live="polite">Load or paste a P&amp;ID document.</div><label for="pid_select">Equipment / element</label><select id="pid_select"></select><button class="btn" id="pid_trace_btn" disabled>Trace connectivity</button><pre id="pid_trace"></pre><p class="note">Topology only; connections do not establish hydraulic performance, valve position or safe isolation.</p></div></div>';
+ $('pid_json').oninput=()=>{pidClear();$('pid_status').textContent='Document edited. Validate before tracing.';};
+ $('pid_validate').onclick=pidValidate;
+ $('pid_sample').onclick=async()=>{try{const response=await fetch('src/pid-sample.json');if(!response.ok)throw new Error('HTTP '+response.status);$('pid_json').value=await response.text();pidValidate();}catch(error){pidClear();$('pid_status').textContent='Sample could not load: '+error.message+'. Serve the app over HTTP, or import src/pid-sample.json manually.';$('pid_status').className='msg bad';}};
+ $('pid_file').onchange=async event=>{const file=event.target.files[0];if(!file)return;try{$('pid_json').value=await file.text();pidValidate();}catch(error){pidClear();$('pid_status').textContent='Import failed: '+error.message;}finally{event.target.value='';}};
+ $('pid_trace_btn').onclick=()=>{if(!pidGraph)return;try{const id=$('pid_select').value;const upstream=PID_SCHEMA.traceUpstream(pidGraph,id);const downstream=PID_SCHEMA.traceDownstream(pidGraph,id);$('pid_trace').textContent='Upstream: '+(upstream.map(node=>node.tag||node.id).join(' -> ')||'None')+'\nDownstream: '+(downstream.map(node=>node.tag||node.id).join(' -> ')||'None');}catch(error){$('pid_trace').textContent='Trace failed: '+error.message;}};
+}});
+
+// ---------- Roadmap ----------
+PHW.register({id:'road',title:'Roadmap',render(el){
+ const items=[['Two-phase line sizing','Planned','Flow regime maps and Lockhart-Martinelli / homogeneous ΔP.'],['Control valve sizing (Cv, Kv)','Planned','Gas and liquid, including choked flow and noise screening.'],['Relief & flare header hydraulics','Planned','Mach-limited headers and backpressure checks.'],['Compressor / fan curves','Planned','Reuse of the curve-fit and operating-point engine.'],['Pump in series / parallel','Planned','Combined curves for debottleneck options.'],['Slurry / red-mud / caustic liquor','Planned','Non-Newtonian friction and density-corrected curves.'],['Heat-exchanger & pipe-network solver','Concept','Multi-branch network balancing.'],['Plant data import (CSV / historian)','Concept','Compare measured vs calculated ΔP to locate bottlenecks.'],['Standards library','Concept','Project-specific ADNOC / EGA criteria sets and pipe classes loaded from JSON.']];
+ el.innerHTML=`<div class="card"><h2>Extension roadmap (open scope)</h2><div class="body"><table><tr><th>Module</th><th>Status</th><th>Description</th></tr>${items.map(i=>`<tr><td>${i[0]}</td><td>${i[1]}</td><td style="text-align:left">${i[2]}</td></tr>`).join('')}</table>
+ <p class="note">Architecture: each module calls <code>PHW.register({id,title,render(el),calc()})</code>; the shared engine (<code>PHW_CORE</code>) holds pure, unit-tested functions, so new modules plug in without changing existing ones.</p></div></div>`;
+}});
+
+// ---------- Shell ----------
+PHW.last={};
+function show(id){ document.querySelectorAll('.panel').forEach(p=>p.classList.toggle('on',p.id==='p_'+id)); document.querySelectorAll('nav button[data-t]').forEach(b=>b.classList.toggle('on',b.dataset.t===id)); drawChart(); }
+PHW.recalc=()=>REG.forEach(m=>{ if(m.calc) try{m.calc();}catch(e){console.error(m.id,e);} });
+function exportJSON(){ const o={}; document.querySelectorAll('main input,main textarea,main select,.ds input').forEach(i=>o[i.id]=i.value); const b=new Blob([JSON.stringify({app:'PHW',version:PHW.version,inputs:o,pid:pidDoc},null,2)],{type:'application/json'}); const a=document.createElement('a'); a.href=URL.createObjectURL(b); a.download='phw-case.json'; a.click(); }
+function importJSON(f){ const r=new FileReader(); r.onload=()=>{ try{ const payload=JSON.parse(r.result); if(payload.app!=='PHW'||!payload.inputs||typeof payload.inputs!=='object'||Array.isArray(payload.inputs))throw new Error('Invalid PHW case'); if(payload.pid!=null){const errors=PID_SCHEMA.validate(payload.pid);if(errors.length)throw new Error(errors.join('; '));} const o=payload.inputs; Object.entries(o).forEach(([k,v])=>{const field=$(k);if(field&&field.type!=='file'&&k!=='pid_json'&&k!=='pid_select')field.value=v;}); pidClear(); $('pid_json').value=payload.pid!=null?JSON.stringify(payload.pid,null,2):''; if(payload.pid!=null)pidValidate(); else $('pid_status').textContent='No P&ID in imported case.'; PHW.recalc(); }catch(e){ alert('Invalid case file: '+e.message); } }; r.readAsText(f); }
+window.addEventListener('DOMContentLoaded',()=>{
+ const order=['gas','liq','pid','crit','road']; const nav=$('nav'), main=$('main');
+ order.map(id=>REG.find(m=>m.id===id)).forEach(m=>{ const b=document.createElement('button'); b.textContent=m.title; b.dataset.t=m.id; b.onclick=()=>show(m.id); nav.appendChild(b); const p=document.createElement('section'); p.className='panel'; p.id='p_'+m.id; main.appendChild(p); m.render(p); });
+ $('dDate').value=new Date().toISOString().slice(0,10);
+ $('b_print').onclick=()=>window.print(); $('b_exp').onclick=exportJSON; $('b_imp').onchange=e=>e.target.files[0]&&importJSON(e.target.files[0]);
+ window.addEventListener('resize',drawChart);
+ PHW.recalc(); show('gas');
+});
+</script></body></html>
